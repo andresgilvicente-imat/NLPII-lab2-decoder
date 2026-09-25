@@ -28,6 +28,7 @@ def _find_submodule_by_type(module, cls):
 
 # -------- AttentionHead --------
 
+
 @pytest.mark.order(1)
 def test_attention_head():
     batch_size = 2
@@ -36,12 +37,18 @@ def test_attention_head():
     d_k = d_q = d_v = 8
 
     x = torch.rand(batch_size, seq_len, d_model)
-    mask = torch.tril(torch.ones(seq_len, seq_len)).unsqueeze(0).repeat(batch_size, 1, 1)
+    mask = (
+        torch.tril(torch.ones(seq_len, seq_len)).unsqueeze(0).repeat(batch_size, 1, 1)
+    )
 
     attention_head = AttentionHead(d_model, d_k, d_q, d_v)
     output = attention_head(x, mask)
 
-    assert output.shape == (batch_size, seq_len, d_v), "Output shape mismatch in AttentionHead"
+    assert output.shape == (
+        batch_size,
+        seq_len,
+        d_v,
+    ), "Output shape mismatch in AttentionHead"
 
 
 @pytest.mark.order(2)
@@ -82,9 +89,13 @@ def test_attention_head_causal_mask_blocks_future_positions():
 
     _, weights = attention_head.scaled_dot_product_attention(q, k, v, mask)
 
-    future_positions = torch.triu(torch.ones(t, t), diagonal=1).bool().unsqueeze(0).expand(b, t, t)
+    future_positions = (
+        torch.triu(torch.ones(t, t), diagonal=1).bool().unsqueeze(0).expand(b, t, t)
+    )
     assert torch.allclose(
-        weights[future_positions], torch.zeros_like(weights[future_positions]), atol=1e-6
+        weights[future_positions],
+        torch.zeros_like(weights[future_positions]),
+        atol=1e-6,
     )
 
     row_sums = weights.sum(dim=-1)
@@ -92,6 +103,7 @@ def test_attention_head_causal_mask_blocks_future_positions():
 
 
 # -------- MultiHeadAttention --------
+
 
 @pytest.mark.order(4)
 def test_multi_head_attention():
@@ -101,12 +113,18 @@ def test_multi_head_attention():
     num_heads = 2
 
     x = torch.rand(batch_size, seq_len, d_model)
-    mask = torch.tril(torch.ones(seq_len, seq_len)).unsqueeze(0).repeat(batch_size, 1, 1)
+    mask = (
+        torch.tril(torch.ones(seq_len, seq_len)).unsqueeze(0).repeat(batch_size, 1, 1)
+    )
 
     multi_head_attention = MultiHeadAttention(d_model, num_heads)
     output = multi_head_attention(x, mask)
 
-    assert output.shape == (batch_size, seq_len, d_model), "Output shape mismatch in MultiHeadAttention"
+    assert output.shape == (
+        batch_size,
+        seq_len,
+        d_model,
+    ), "Output shape mismatch in MultiHeadAttention"
 
 
 @pytest.mark.order(5)
@@ -117,7 +135,9 @@ def test_multi_head_attention_heads_are_independent_modules():
     # catches it.
     torch.manual_seed(0)
     num_attention_heads = 2
-    multi_head_attention = MultiHeadAttention(d_model=8, num_attention_heads=num_attention_heads)
+    multi_head_attention = MultiHeadAttention(
+        d_model=8, num_attention_heads=num_attention_heads
+    )
     heads = list(multi_head_attention.heads)
     assert len(heads) == num_attention_heads
     assert len(heads) == len(set(id(h) for h in heads))
@@ -125,6 +145,7 @@ def test_multi_head_attention_heads_are_independent_modules():
 
 
 # -------- FeedForward --------
+
 
 @pytest.mark.order(6)
 def test_feed_forward():
@@ -137,7 +158,11 @@ def test_feed_forward():
     feed_forward = FeedForward(d_model, intermediate_size)
     output = feed_forward(x)
 
-    assert output.shape == (batch_size, seq_len, d_model), "Output shape mismatch in FeedForward"
+    assert output.shape == (
+        batch_size,
+        seq_len,
+        d_model,
+    ), "Output shape mismatch in FeedForward"
 
 
 @pytest.mark.order(7)
@@ -161,6 +186,7 @@ def test_feedforward_uses_gelu_activation():
 
 
 # -------- Embeddings --------
+
 
 @pytest.mark.order(8)
 def test_embeddings_use_both_token_and_position_information():
@@ -186,6 +212,7 @@ def test_embeddings_use_both_token_and_position_information():
 
 # -------- TransformerDecoderLayer --------
 
+
 @pytest.mark.order(9)
 def test_transformer_decoder_layer():
     batch_size = 2
@@ -202,7 +229,9 @@ def test_transformer_decoder_layer():
     output_with_mask = decoder_layer(x, mask)
     output_no_mask = decoder_layer(x, None)
 
-    assert not torch.allclose(output_with_mask, output_no_mask), "Mask is not being applied; outputs are identical."
+    assert not torch.allclose(
+        output_with_mask, output_no_mask
+    ), "Mask is not being applied; outputs are identical."
 
 
 @pytest.mark.order(10)
@@ -235,6 +264,7 @@ def test_decoder_layer_residual_stream_preserves_input():
 
 # -------- TransformerDecoder --------
 
+
 @pytest.mark.order(11)
 def test_transformer_decoder():
     batch_size = 2
@@ -247,11 +277,21 @@ def test_transformer_decoder():
     num_layers = 2
 
     input_ids = torch.randint(0, vocab_size, (batch_size, seq_len))
-    decoder = TransformerDecoder(vocab_size, max_position_embeddings, d_model,
-                                num_heads, intermediate_size, num_layers)
+    decoder = TransformerDecoder(
+        vocab_size,
+        max_position_embeddings,
+        d_model,
+        num_heads,
+        intermediate_size,
+        num_layers,
+    )
     output = decoder(input_ids)
 
-    assert output.shape == (batch_size, seq_len, d_model), "Output shape mismatch in TransformerDecoder"
+    assert output.shape == (
+        batch_size,
+        seq_len,
+        d_model,
+    ), "Output shape mismatch in TransformerDecoder"
 
     # The stack of decoder layers must actually be used: a decoder that
     # (bug) skips straight from embeddings to the output would still have
@@ -291,7 +331,12 @@ def test_transformer_decoder_causal_mask_blocks_future_tokens():
     num_heads, intermediate_size, num_layers = 2, 16, 2
 
     decoder = TransformerDecoder(
-        vocab_size, max_position_embeddings, d_model, num_heads, intermediate_size, num_layers
+        vocab_size,
+        max_position_embeddings,
+        d_model,
+        num_heads,
+        intermediate_size,
+        num_layers,
     )
     decoder.eval()
 
@@ -309,6 +354,7 @@ def test_transformer_decoder_causal_mask_blocks_future_tokens():
 
 # -------- TransformerForLanguageModeling --------
 
+
 @pytest.mark.order(14)
 def test_transformer_for_language_modeling():
     batch_size = 2
@@ -321,8 +367,18 @@ def test_transformer_for_language_modeling():
     num_layers = 2
 
     input_ids = torch.randint(0, vocab_size, (batch_size, seq_len))
-    model = TransformerForLanguageModeling(vocab_size, max_position_embeddings, d_model,
-                                            num_heads, intermediate_size, num_layers)
+    model = TransformerForLanguageModeling(
+        vocab_size,
+        max_position_embeddings,
+        d_model,
+        num_heads,
+        intermediate_size,
+        num_layers,
+    )
     logits = model(input_ids)
 
-    assert logits.shape == (batch_size, seq_len, vocab_size), "Output shape mismatch in TransformerForLanguageModeling"
+    assert logits.shape == (
+        batch_size,
+        seq_len,
+        vocab_size,
+    ), "Output shape mismatch in TransformerForLanguageModeling"

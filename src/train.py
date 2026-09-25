@@ -6,8 +6,14 @@ import torch.nn as nn
 import torch.optim as optim
 from data_processing import CharTokenizer
 from torch.utils.data import DataLoader
-from data_processing import load_and_preprocess_data, CharTokenizer, NameDataset, collate_fn
+from data_processing import (
+    load_and_preprocess_data,
+    CharTokenizer,
+    NameDataset,
+    collate_fn,
+)
 from decoder import TransformerForLanguageModeling  # Import your model class
+
 
 def train(
     train_loader: DataLoader,
@@ -17,7 +23,7 @@ def train(
     learning_rate: float,
     model_save_dir: str,
     model_params: dict,
-    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 ):
     """
     Train a Transformer decoder model for name generation.
@@ -39,10 +45,9 @@ def train(
     # Initialize the model
     print("Initializing model...")
     vocab_size = tokenizer.vocab_size
-    model = TransformerForLanguageModeling(
-        vocab_size=vocab_size,
-        **model_params
-    ).to(device)
+    model = TransformerForLanguageModeling(vocab_size=vocab_size, **model_params).to(
+        device
+    )
 
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss(ignore_index=0)  # Assuming 0 is the padding index
@@ -93,14 +98,22 @@ def train(
                 val_loss += loss.item()
 
         average_val_loss = val_loss / len(val_loader)
-        print(f"Epoch [{epoch+1}/{num_epochs}], Validation Loss: {average_val_loss:.4f}")
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}], Validation Loss: {average_val_loss:.4f}"
+        )
 
     return model
+
 
 # Example usage
 if __name__ == "__main__":
     from torch.utils.data import DataLoader, random_split
-    from data_processing import load_and_preprocess_data, CharTokenizer, NameDataset, collate_fn
+    from data_processing import (
+        load_and_preprocess_data,
+        CharTokenizer,
+        NameDataset,
+        collate_fn,
+    )
 
     # Define parameters
     data_filepath = "data/nombres_raw.txt"  # Replace with your actual file path

@@ -37,7 +37,9 @@ def load_and_preprocess_data(
         parts: List[str] = line.strip().split()
         if len(parts) < 3:
             continue  # Skip lines that don't have enough parts
-        word: str = " ".join(parts[:-2]).lower()  # Joining all parts except the last two
+        word: str = " ".join(
+            parts[:-2]
+        ).lower()  # Joining all parts except the last two
 
         # Filtering out characters not in the alphabet
         word = "".join([char for char in word if char in alphabet])
@@ -89,7 +91,7 @@ class CharTokenizer:
         Returns:
             str: The decoded string.
         """
-        return ''.join([self.idx2char[idx] for idx in indices])
+        return "".join([self.idx2char[idx] for idx in indices])
 
 
 class NameDataset(Dataset):
@@ -122,7 +124,9 @@ class NameDataset(Dataset):
         return input_ids, target_ids
 
 
-def collate_fn(batch: List[Tuple[torch.Tensor, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor]:
+def collate_fn(
+    batch: List[Tuple[torch.Tensor, torch.Tensor]]
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Custom collate function to handle variable-length sequences in the batch.
 
